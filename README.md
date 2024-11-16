@@ -44,10 +44,10 @@ During the deployment, you will be asked for some parameters:
 - Allow SAM CLI IAM role creation [Y/n]: `insert 'y'`
 - Disable rollback [y/N]: `insert 'n'`
 - Save arguments to configuration file [Y/n]: `insert 'y'`
-- SAM configuration file [samconfig.toml]: `insert a stack name (es. 'samconfig.toml')`
+- SAM configuration file [samconfig.toml]: `insert a file name (es. 'samconfig.toml')`
 - SAM configuration environment [default]: `insert a configuration environment (es. 'default')`
 
 ### Delete the infrastructure
-- Run `aws s3 rm s3://<AWS_ACCOUNT_ID>-source-bucket --recursive` to empty the source S3 bucket.
-- Run `aws s3 rm s3://<AWS_ACCOUNT_ID>-destination-bucket --recursive` to empty the destination S3 bucket.
+- Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-source-bucket --recursive` to empty the source S3 bucket.
+- Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-destination-bucket --recursive` to empty the destination S3 bucket.
 - Run `sam delete` to delete the infrastructure.
