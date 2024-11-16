@@ -1,0 +1,42 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: An AWS Serverless Application. This template is partially managed by Amazon.Lambda.Annotations (v1.2.0.0).
+Resources:
+  # Lambda
+  ImageOptimizerLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ImageOptimizer
+      Architectures:
+        - x86_64
+      Handler: ImageOptimizerLambda::ImageOptimizerLambda.Functions_FunctionHandler_Generated::FunctionHandler
+      Runtime: dotnet8
+      CodeUri: "."
+      MemorySize: 512
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - AmazonS3FullAccess
+      PackageType: Zip
+      Events:
+        S3Event:
+          Type: S3
+          Properties:
+            Bucket: !Ref S3SourceBucket
+            Events:
+              - s3:ObjectCreated:*
+      Environment:
+        Variables:
+          S3_SOURCE_BUCKET_NAME: !Sub "${AWS::AccountId}-source-bucket"
+          S3_DESTINATION_BUCKET_NAME: !Sub "${AWS::AccountId}-destination-bucket"
+  # S3 Source Bucket
+  S3SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-source-bucket"
+  # S3 Destination Bucker
+  S3DestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-destination-bucket"
