@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+    <RunConfiguration>
+        <EnvironmentVariables>
+            <!-- List of environment variables we want to set-->
+            <MAX_IMAGE_UPLOAD_SIZE_IN_BYTES>104857600</MAX_IMAGE_UPLOAD_SIZE_IN_BYTES>
+        </EnvironmentVariables>
+    </RunConfiguration>
+</RunSettings>

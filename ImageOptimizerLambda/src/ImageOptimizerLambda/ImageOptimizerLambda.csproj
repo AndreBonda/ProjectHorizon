@@ -17,6 +17,7 @@
     <PackageReference Include="Amazon.Lambda.APIGatewayEvents" Version="2.7.0" />
     <PackageReference Include="AWSSDK.S3" Version="3.7.406.2" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\..\.gitignore">
@@ -28,5 +29,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="image-optimizer.toml" />
+    <None Remove="samconfig.toml" />
   </ItemGroup>
 </Project>

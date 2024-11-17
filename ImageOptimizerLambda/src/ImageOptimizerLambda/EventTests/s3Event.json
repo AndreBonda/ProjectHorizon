@@ -6,7 +6,8 @@
           "name": "example-bucket"
         },
         "object": {
-          "key": "example-file.txt"
+          "key": "example-file.txt",
+          "size": 1000000
         }
       }
     }

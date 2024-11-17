@@ -51,3 +51,6 @@ During the deployment, you will be asked for some parameters:
 - Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-source-bucket --recursive` to empty the source S3 bucket.
 - Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-destination-bucket --recursive` to empty the destination S3 bucket.
 - Run `sam delete` to delete the infrastructure.
+
+## How to run unit tests
+- Run `dotnet test --settings ImageOptimizerLambda/test/ImageOptimizerLambda.Tests/Configurations/test.runsettings.xml`
