@@ -1,5 +1,6 @@
 using Amazon.Lambda.Annotations;
 using Amazon.S3;
+using ImageOptimizerLambda.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ImageOptimizerLambda;
@@ -13,5 +14,6 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         services.AddScoped<IAmazonS3, AmazonS3Client>();
+        services.AddScoped<IImageOptimizerService, ImageOptimizerService>();
     }
 }

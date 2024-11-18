@@ -3,6 +3,7 @@ using Amazon.Lambda.TestUtilities;
 using Amazon.S3;
 using Amazon.S3.Util;
 using Castle.Core.Logging;
+using ImageOptimizerLambda.Services;
 using Xunit;
 using NSubstitute;
 
@@ -11,12 +12,14 @@ namespace ImageOptimizerLambda.Tests;
 public class FunctionTest
 {
     private readonly IAmazonS3 _s3Client;
+    private readonly IImageOptimizerService _imageOptimizerService;
     private readonly ILambdaContext _lambdaContext;
     private readonly Functions _functions;
 
     public FunctionTest()
     {
         _s3Client = Substitute.For<IAmazonS3>();
+        _imageOptimizerService = Substitute.For<IImageOptimizerService>();
         _lambdaContext = Substitute.For<ILambdaContext>();
         _lambdaContext.Logger.Returns(Substitute.For<ILambdaLogger>());
         _functions = new Functions();
@@ -49,6 +52,7 @@ public class FunctionTest
         // Act
         await _functions.FunctionHandlerAsync(
             _s3Client,
+            _imageOptimizerService,
             s3Event,
             _lambdaContext);
 

@@ -452,3 +452,4 @@ $RECYCLE.BIN/
 ## sam
 .aws-sam
 *.toml
+/ImageOptimizerLambda/src/ImageOptimizerLambda/serverless.template

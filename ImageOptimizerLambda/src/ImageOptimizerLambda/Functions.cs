@@ -1,14 +1,9 @@
-using System.Net;
 using Amazon.Lambda.Core;
-using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Annotations;
-using Amazon.Lambda.Annotations.APIGateway;
 using Amazon.S3;
 using Amazon.S3.Model;
-using Amazon.S3.Transfer;
 using Amazon.S3.Util;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Webp;
+using ImageOptimizerLambda.Services;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -18,7 +13,11 @@ namespace ImageOptimizerLambda;
 public class Functions
 {
     [LambdaFunction]
-    public async Task FunctionHandlerAsync([FromServices] IAmazonS3 s3Client, S3EventNotification input, ILambdaContext context)
+    public async Task FunctionHandlerAsync(
+        [FromServices] IAmazonS3 s3Client,
+        [FromServices] IImageOptimizerService imageOptimizerService,
+        S3EventNotification input,
+        ILambdaContext context)
     {
         try
         {
@@ -37,24 +36,14 @@ public class Functions
             var response = await s3Client.GetObjectAsync(sourceBucketName, uploadedImageName);
 
             // Image conversion
-            using var inputStream = response.ResponseStream;
-            using var image = await Image.LoadAsync(inputStream);
-            using var outputStream = new MemoryStream();
-            await image.SaveAsync(
-                outputStream,
-                new WebpEncoder
-                {
-                    FileFormat = WebpFileFormatType.Lossless
-                });
-
-            outputStream.Position = 0;
+            using var webpStream = await imageOptimizerService.ConvertImageToWebpFormat(response.ResponseStream);
 
             // Upload image to destination
             var putRequest = new PutObjectRequest
             {
                 BucketName = destinationBucketName,
-                Key = uploadedImageName.Split('.')[0]+".webp",
-                InputStream = outputStream
+                Key = imageOptimizerService.GetWebpImageName(uploadedImageName),
+                InputStream = webpStream
             };
             await s3Client.PutObjectAsync(putRequest);
 
