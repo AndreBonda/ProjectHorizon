@@ -1,8 +1,7 @@
 using Amazon.Lambda.Core;
-using Amazon.Lambda.TestUtilities;
 using Amazon.S3;
+using Amazon.S3.Model;
 using Amazon.S3.Util;
-using Castle.Core.Logging;
 using ImageOptimizerLambda.Services;
 using Xunit;
 using NSubstitute;
@@ -60,5 +59,50 @@ public class FunctionTest
         _lambdaContext.Logger
             .Received(1)
             .LogError(Arg.Is<string>(x => x.Contains("too large")));
+    }
+
+    [Fact]
+    public async Task FunctionHandlerAsync_UploadsWebpImage()
+    {
+        // Arrange
+        _s3Client
+            .GetObjectAsync(Arg.Any<string>(), Arg.Any<string>())
+            .Returns(new GetObjectResponse());
+        _imageOptimizerService
+            .GetWebpImageName(Arg.Any<string>())
+            .Returns("example-file.webp");
+        S3EventNotification s3Event = S3EventNotification.ParseJson(
+            $$"""
+              {
+                  "Records": [
+                      {
+                          "s3": {
+                              "bucket": {
+                                  "name": "example-bucket"
+                              },
+                              "object": {
+                                  "key": "example-file.png",
+                                  "size": 500
+                              }
+                          }
+                      }
+                  ]
+              }
+              """);
+
+        // Act
+        await _functions.FunctionHandlerAsync(
+            _s3Client,
+            _imageOptimizerService,
+            s3Event,
+            _lambdaContext);
+
+        // Assert
+        await _s3Client
+            .Received(1)
+            .PutObjectAsync(Arg.Is<PutObjectRequest>(o => o.Key == "example-file.webp"));
+        _lambdaContext.Logger
+            .Received(1)
+            .LogInformation(Arg.Is<string>(s => s.Contains("successfully")));
     }
 }
