@@ -4,6 +4,7 @@
         <EnvironmentVariables>
             <!-- List of environment variables we want to set-->
             <MAX_IMAGE_UPLOAD_SIZE_IN_BYTES>104857600</MAX_IMAGE_UPLOAD_SIZE_IN_BYTES>
+            <MAX_IMAGE_DIMENSION>1000</MAX_IMAGE_DIMENSION>
         </EnvironmentVariables>
     </RunConfiguration>
 </RunSettings>
