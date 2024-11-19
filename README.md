@@ -2,8 +2,7 @@
 
 ## Description
 Imagine a world where images are processed and transformed effortlessly in the cloud.  
-_Project Horizon_ is an image processing pipeline that optimize images uploaded by users, making them smaller and faster
-to load without sacrificing visual quality.
+_Project Horizon_ is an image processing pipeline that optimize images uploaded by users, making them smaller and faster to load without sacrificing visual quality.
 
 ## System Requirements
 
@@ -29,8 +28,7 @@ As the architecture, I implemented a serverless architecture on AWS as it meets 
 - AWS events are easy to leverage to implement an event-driven asynchronous system.
 - With the AWS Lambda service, we ensure efficiency and low costs thanks to the pay-per-use pricing model.
 
-The system leverages Lambda and S3 services to operate and can be interacted with through CLIs, applications using the  
-AWS SDK, or clients that interact with the system via HTTP and an API Gateway if the application needs to scale.
+The system leverages Lambda and S3 services to operate and can be interacted with through CLIs, applications using the AWS SDK, or clients that interact with the system via HTTP and an API Gateway if the application needs to scale.
 <br>
 <br>
 Given the limited time, **the system can only be interacted with through the CLI for now**.
@@ -40,14 +38,11 @@ Given the limited time, **the system can only be interacted with through the CLI
 ## Balance between speed, storage, and image quality.
 The system uses the [SixLabors.ImageSharp](https://docs.sixlabors.com/articles/imagesharp/index.html?tabs=tabid-1) library to manipulate images and is configured to balance storage efficiency and image quality.  
 <br>
-The maximum size of the optimized images is 1.000x1.000 pixels, and the Lanczos algorithm is used for downscaling, ensuring good image quality.  
-You can configure it via the `MAX_IMAGE_DIMENSION` environment variable.
+The maximum size of the optimized images is 1.000x1.000 pixels, and the Lanczos algorithm is used for downscaling, ensuring good image quality. You can configure it via the `MAX_IMAGE_DIMENSION` environment variable.
 <br><br>
-To prevent memory issues on Lambda, an environment variable `MAX_IMAGE_UPLOAD_SIZE_IN_BYTES` has been configured to set the  
-maximum image size in MB for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
+To prevent memory issues on Lambda, an environment variable `MAX_IMAGE_UPLOAD_SIZE_IN_BYTES` has been configured to set the maximum image size in MB for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
 <br><br>
-As the conversion algorithm, WebP in Lossless mode has been used. WebP is a good choice because it offers efficient compression  
-without compromising image quality and is supported by all major web browsers.
+As the conversion algorithm, WebP in Lossless mode has been used. WebP is a good choice because it offers efficient compression without compromising image quality and is supported by all major web browsers.
 
 ### Benchmarks (Maximum image dimension: 1000 pixels)
 | Filename             | Original Dimension (pixels) | Original Size (MB) | Final Dimension (pixels) | Final Size (MB) | Lambda Billed Duration (ms) |
