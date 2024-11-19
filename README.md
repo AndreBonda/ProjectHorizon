@@ -40,7 +40,7 @@ The system uses the [SixLabors.ImageSharp](https://docs.sixlabors.com/articles/i
 <br>
 The maximum size of the optimized images is 1.000x1.000 pixels, and the Lanczos algorithm is used for downscaling, ensuring good image quality. You can configure it via the `MAX_IMAGE_DIMENSION` environment variable.
 <br><br>
-To prevent memory issues on Lambda, an environment variable `MAX_IMAGE_UPLOAD_SIZE_IN_BYTES` has been configured to set the maximum image size in MB for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
+To prevent memory issues on Lambda, an environment variable `MAX_IMAGE_UPLOAD_SIZE_IN_BYTES` has been configured to set the maximum image size (in bytes) for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
 <br><br>
 As the conversion algorithm, WebP in Lossless mode has been used. WebP is a good choice because it offers efficient compression without compromising image quality and is supported by all major web browsers.
 
