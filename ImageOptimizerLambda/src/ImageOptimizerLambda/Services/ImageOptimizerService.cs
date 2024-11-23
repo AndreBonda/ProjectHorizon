@@ -19,7 +19,7 @@ public class ImageOptimizerService : IImageOptimizerService
     }
 
     /// <inheritdoc />
-    public string GenerateWebpFileName(string originalName) => originalName.Split('.')[0] + ".webp";
+    public string GenerateFileName(string originalName) => originalName.Split('.')[0] + ".webp";
 
     /// <inheritdoc />
     public void ResizeImage(Image image, int maxImageDimension)

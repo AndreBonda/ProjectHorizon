@@ -5,17 +5,17 @@ namespace ImageOptimizerLambda.Services;
 public interface IImageOptimizerService
 {
     /// <summary>
-    /// Optimizes an image by resizing it to fit within the specified maximum dimensions and converting it to WebP format.
+    /// Reduces the memory usage of the original image by applying compression and resizing it to fit within the specified maximum dimensions.
     /// </summary>
     /// <param name="inputStream">The input stream containing the image to optimize.</param>
     /// <param name="maxImageDimension">The maximum allowed dimension (in pixels) for the longest side of the image.</param>
-    /// <returns>A memory stream containing the optimized image in WebP format.</returns>
+    /// <returns>A memory stream containing the optimized image.</returns>
     Task<MemoryStream> OptimizeImage(Stream? inputStream, int maxImageDimension);
 
     /// <summary>
-    /// Returns the name with the current file extension replaced by .webp.
+    /// Returns the name with its file extension.
     /// </summary>
-    string GenerateWebpFileName(string originalName);
+    string GenerateFileName(string originalName);
 
     /// <summary>
     /// Resizes the image. The longest side of the image is shortened based on the maxImageDimension parameter, and the

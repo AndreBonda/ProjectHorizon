@@ -41,7 +41,7 @@ public class ImageOptimizerServiceTest
     public void GetWebpImageName_SetsWebpFileExtension(string fileName, string expectedFileName)
     {
         // Act
-        var actualName = _imageOptimizerService.GenerateWebpFileName(fileName);
+        var actualName = _imageOptimizerService.GenerateFileName(fileName);
 
         // Assert
         Assert.Equal(expectedFileName, actualName);

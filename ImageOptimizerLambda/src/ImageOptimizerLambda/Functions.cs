@@ -42,7 +42,7 @@ public class Functions
             await s3Client.PutObjectAsync(new PutObjectRequest
             {
                 BucketName = destinationBucketName,
-                Key = imageOptimizerService.GenerateWebpFileName(uploadedImageName),
+                Key = imageOptimizerService.GenerateFileName(uploadedImageName),
                 InputStream = webpStream
             });
 

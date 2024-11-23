@@ -69,7 +69,7 @@ public class FunctionTest
             .GetObjectAsync(Arg.Any<string>(), Arg.Any<string>())
             .Returns(new GetObjectResponse());
         _imageOptimizerService
-            .GenerateWebpFileName(Arg.Any<string>())
+            .GenerateFileName(Arg.Any<string>())
             .Returns("example-file.webp");
         S3EventNotification s3Event = S3EventNotification.ParseJson(
             $$"""
