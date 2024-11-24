@@ -98,4 +98,4 @@ There are some images provided for you inside the `SourceImages` folder.
 
 ## How to run unit tests
 
-- Run `dotnet test --settings ImageOptimizerLambda/test/ImageOptimizerLambda.Tests/Configurations/test.runsettings.xml`
+- Run `dotnet test`
