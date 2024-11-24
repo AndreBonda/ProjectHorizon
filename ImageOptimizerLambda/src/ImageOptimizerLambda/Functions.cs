@@ -44,7 +44,9 @@ public class Functions
             await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
 
         var newImageName = imageOptimizerService.GenerateFileName(uploadedImageName);
-        await UploadImageToDestinationBucket(s3Client, parameters.DestinationBucketName, newImageName, optimizedImageStream);
+
+        await UploadImageToDestinationBucket(s3Client, parameters.DestinationBucketName, newImageName,
+            optimizedImageStream);
 
         context.Logger.LogInformation($"The image {uploadedImageName} was processed successfully.");
     }
@@ -107,12 +109,12 @@ public class Functions
     private async Task<MemoryStream> GetOptimizedImage(
         IImageOptimizerService imageOptimizerService,
         Stream originalImage,
-        int maxImageDimensionInBytes
+        int maxImageDimension
     )
     {
         try
         {
-            return await imageOptimizerService.OptimizeImageAsync(originalImage, maxImageDimensionInBytes);
+            return await imageOptimizerService.OptimizeImageAsync(originalImage, maxImageDimension);
         }
         catch (Exception e)
         {
