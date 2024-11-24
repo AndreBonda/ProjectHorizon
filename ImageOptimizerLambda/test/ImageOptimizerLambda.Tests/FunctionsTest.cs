@@ -2,6 +2,7 @@ using Amazon.Lambda.Core;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
+using ImageOptimizerLambda.Exceptions;
 using ImageOptimizerLambda.Services;
 using Xunit;
 using NSubstitute;
@@ -48,17 +49,15 @@ public class FunctionTest
               }
               """);
 
-        // Act
-        await _functions.FunctionHandlerAsync(
-            _s3Client,
-            _imageOptimizerService,
-            s3Event,
-            _lambdaContext);
-
-        // Assert
-        _lambdaContext.Logger
-            .Received(1)
-            .LogError(Arg.Is<string>(x => x.Contains("too large")));
+        // Act & Assert
+        await Assert.ThrowsAsync<ImageDownloadFromSourceBucketException>(async () =>
+        {
+            await _functions.FunctionHandlerAsync(
+                _s3Client,
+                _imageOptimizerService,
+                s3Event,
+                _lambdaContext);
+        });
     }
 
     [Fact]

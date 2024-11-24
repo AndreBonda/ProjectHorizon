@@ -7,7 +7,7 @@ namespace ImageOptimizerLambda.Services;
 public class ImageOptimizerService : IImageOptimizerService
 {
     /// <inheritdoc />
-    public async Task<MemoryStream> OptimizeImage(Stream? inputStream, int maxImageDimension)
+    public async Task<MemoryStream> OptimizeImageAsync(Stream? inputStream, int maxImageDimension)
     {
         if (inputStream is null)
             return new MemoryStream();

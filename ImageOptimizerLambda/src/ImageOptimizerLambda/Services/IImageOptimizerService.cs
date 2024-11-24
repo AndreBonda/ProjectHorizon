@@ -10,7 +10,7 @@ public interface IImageOptimizerService
     /// <param name="inputStream">The input stream containing the image to optimize.</param>
     /// <param name="maxImageDimension">The maximum allowed dimension (in pixels) for the longest side of the image.</param>
     /// <returns>A memory stream containing the optimized image.</returns>
-    Task<MemoryStream> OptimizeImage(Stream? inputStream, int maxImageDimension);
+    Task<MemoryStream> OptimizeImageAsync(Stream? inputStream, int maxImageDimension);
 
     /// <summary>
     /// Returns the name with its file extension.

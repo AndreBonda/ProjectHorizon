@@ -13,7 +13,7 @@ public class ImageOptimizerServiceTest
     public async Task OptimizeImage_ReturnsAndEmptyStream_WhenTheInputIsNull()
     {
         // Arrange & Act
-        var resultStream = await _imageOptimizerService.OptimizeImage(null, 100);
+        var resultStream = await _imageOptimizerService.OptimizeImageAsync(null, 100);
 
         // Assert
         Assert.True(resultStream.Length == 0);
@@ -29,7 +29,7 @@ public class ImageOptimizerServiceTest
         inputStream.Position = 0;
 
         // Act
-        var resultStream = await _imageOptimizerService.OptimizeImage(inputStream, 100);
+        var resultStream = await _imageOptimizerService.OptimizeImageAsync(inputStream, 100);
 
         // Assert
         Assert.True(resultStream.Length > 0);
