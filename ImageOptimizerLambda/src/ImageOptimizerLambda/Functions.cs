@@ -5,6 +5,8 @@ using Amazon.S3.Model;
 using Amazon.S3.Util;
 using ImageOptimizerLambda.Exceptions;
 using ImageOptimizerLambda.Services;
+using Microsoft.Extensions.Configuration;
+using SixLabors.ImageSharp;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -13,45 +15,57 @@ namespace ImageOptimizerLambda;
 
 public class Functions
 {
+    private record Parameters(
+        int MaxImageDimension,
+        long MaxImageSizeInBytes,
+        string SourceBucketName,
+        string DestinationBucketName);
+
     [LambdaFunction]
     public async Task FunctionHandlerAsync(
+        [FromServices] IConfiguration config,
         [FromServices] IAmazonS3 s3Client,
         [FromServices] IImageOptimizerService imageOptimizerService,
         S3EventNotification input,
         ILambdaContext context)
     {
+        Parameters parameters = GetParametersFromConfiguration(config);
         string uploadedImageName = input.Records.First().S3.Object.Key;
         long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
-        string sourceBucketName = Environment.GetEnvironmentVariable("S3_SOURCE_BUCKET_NAME")!;
-        string destinationBucketName = Environment.GetEnvironmentVariable("S3_DESTINATION_BUCKET_NAME")!;
-        int maxImageDimension = int.Parse(Environment.GetEnvironmentVariable("MAX_IMAGE_DIMENSION")!);
 
         var imageStream = await DownloadImageFromSourceBucket(
             s3Client,
-            sourceBucketName,
+            parameters.SourceBucketName,
             uploadedImageName,
-            uploadedImageSizeInBytes);
+            uploadedImageSizeInBytes,
+            parameters.MaxImageSizeInBytes);
 
         using var optimizedImageStream =
-            await GetOptimizedImage(imageOptimizerService, imageStream, maxImageDimension);
+            await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
 
         var newImageName = imageOptimizerService.GenerateFileName(uploadedImageName);
-        await UploadImageToDestinationBucket(s3Client, destinationBucketName, newImageName, optimizedImageStream);
+        await UploadImageToDestinationBucket(s3Client, parameters.DestinationBucketName, newImageName, optimizedImageStream);
 
         context.Logger.LogInformation($"The image {uploadedImageName} was processed successfully.");
     }
+
+    private Parameters GetParametersFromConfiguration(IConfiguration config) =>
+        new(
+            MaxImageDimension: Convert.ToInt32(config.GetRequiredSection("Settings:MaxImageDimension").Value),
+            MaxImageSizeInBytes: Convert.ToInt64(config.GetRequiredSection("Settings:MaxImageSizeInBytes").Value),
+            SourceBucketName: config.GetRequiredSection("S3_SOURCE_BUCKET_NAME").Value!,
+            DestinationBucketName: config.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value!
+        );
 
     private async Task<Stream> DownloadImageFromSourceBucket(
         IAmazonS3 s3Client,
         string sourceBucketName,
         string imageName,
-        long uploadedImageSizeInBytes)
+        long uploadedImageSizeInBytes,
+        long maxImageSizeBytes)
     {
         try
         {
-            var maxImageSizeBytes =
-                Convert.ToInt64(Environment.GetEnvironmentVariable("MAX_IMAGE_UPLOAD_SIZE_IN_BYTES"));
-
             if (uploadedImageSizeInBytes > maxImageSizeBytes)
             {
                 throw new TooLargeImageException(

@@ -38,9 +38,9 @@ Given the limited time, **the system can only be interacted with through the CLI
 ## Balance between speed, storage, and image quality.
 The system uses the [SixLabors.ImageSharp](https://docs.sixlabors.com/articles/imagesharp/index.html?tabs=tabid-1) library to manipulate images and is configured to balance storage efficiency and image quality.  
 <br>
-The maximum size of the optimized images is 1.000x1.000 pixels, and the Lanczos algorithm is used for downscaling, ensuring good image quality. You can configure it via the `MAX_IMAGE_DIMENSION` environment variable.
+The maximum size of the optimized images is 1.000x1.000 pixels, and the Lanczos algorithm is used for downscaling, ensuring good image quality. You can configure it in the `appSettings.json` file by modifying the `MaxImageDimension` property.
 <br><br>
-To prevent memory issues on Lambda, an environment variable `MAX_IMAGE_UPLOAD_SIZE_IN_BYTES` has been configured to set the maximum image size (in bytes) for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
+To prevent memory issues on Lambda, the property `MaxImageSizeInBytes` in the `appSettings.json` file has been configured to set the maximum image size (in bytes) for processing. If a larger image is uploaded to the source storage bucket, it will not be processed by the Lambda.
 <br><br>
 As the conversion algorithm, WebP in Lossless mode has been used. WebP is a good choice because it offers efficient compression without compromising image quality and is supported by all major web browsers.
 

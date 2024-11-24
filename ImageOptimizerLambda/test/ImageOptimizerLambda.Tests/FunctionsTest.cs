@@ -4,6 +4,7 @@ using Amazon.S3.Model;
 using Amazon.S3.Util;
 using ImageOptimizerLambda.Exceptions;
 using ImageOptimizerLambda.Services;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 using NSubstitute;
 
@@ -11,6 +12,7 @@ namespace ImageOptimizerLambda.Tests;
 
 public class FunctionTest
 {
+    private readonly IConfiguration _configuration;
     private readonly IAmazonS3 _s3Client;
     private readonly IImageOptimizerService _imageOptimizerService;
     private readonly ILambdaContext _lambdaContext;
@@ -18,11 +20,21 @@ public class FunctionTest
 
     public FunctionTest()
     {
+        _configuration = Substitute.For<IConfiguration>();
+        SetupConfiguration();
         _s3Client = Substitute.For<IAmazonS3>();
         _imageOptimizerService = Substitute.For<IImageOptimizerService>();
         _lambdaContext = Substitute.For<ILambdaContext>();
         _lambdaContext.Logger.Returns(Substitute.For<ILambdaLogger>());
         _functions = new Functions();
+    }
+
+    private void SetupConfiguration()
+    {
+        _configuration.GetRequiredSection("Settings:MaxImageDimension").Value.Returns("1000");
+        _configuration.GetRequiredSection("Settings:MaxImageSizeInBytes").Value.Returns("1000");
+        _configuration.GetRequiredSection("S3_SOURCE_BUCKET_NAME").Value.Returns("source-bucket-name");
+        _configuration.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value.Returns("destination-bucket-name");
     }
 
     [Fact]
@@ -53,6 +65,7 @@ public class FunctionTest
         await Assert.ThrowsAsync<ImageDownloadFromSourceBucketException>(async () =>
         {
             await _functions.FunctionHandlerAsync(
+                _configuration,
                 _s3Client,
                 _imageOptimizerService,
                 s3Event,
@@ -91,6 +104,7 @@ public class FunctionTest
 
         // Act
         await _functions.FunctionHandlerAsync(
+            _configuration,
             _s3Client,
             _imageOptimizerService,
             s3Event,
