@@ -16,10 +16,6 @@ _Project Horizon_ is an image processing pipeline that optimize images uploaded 
 - The system ensures efficient image processing to minimize execution time and costs.
 - The system includes basic error handling to ensure the robustness of your function.
 
-### Constraints
-- Adopt .Net Core and/or Java as the technology stack.
-- The time limit for designing and implementing the system is 10 hours.
-
 ## System Design
 
 ### Infrastructure
