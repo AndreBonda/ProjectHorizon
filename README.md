@@ -53,32 +53,12 @@ For deploying and running Project Horizon, you need to have:
 
 - [An AWS account](https://aws.amazon.com/account/?nc1=h_ls)
 - [AWS CLI configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html)
-- [SAM (Serverless Application Model)](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html#install-sam-cli-instructions)
-
-### Build artifacts
-
-- `cd ImageOptimizerLambda/src/ImageOptimizerLambda`
-- `sam build`
 
 ### Deploy the infrastructure to AWS
-
-- Run `sam deploy --guided` the first time, or `sam deploy` for subsequent deployments.
-
-#### SAM configurations (only the first time)
-
-During the deployment, you will be asked for some parameters:
-
-- Stack Name [sam-app]: `insert a stack name (es. 'project-horizon')`
-- AWS Region [us-east-1]: `insert an AWS Region (es. 'us-east-1')`
-- Confirm changes before deploy [y/N]: `insert: 'n'`
-- Allow SAM CLI IAM role creation [Y/n]: `insert 'y'`
-- Disable rollback [y/N]: `insert 'n'`
-- Save arguments to configuration file [Y/n]: `insert 'y'`
-- SAM configuration file [samconfig.toml]: `insert a file name (es. 'samconfig.toml')`
-- SAM configuration environment [default]: `insert a configuration environment (es. 'default')`
+- From the root of the project run `./deploy.sh` (default region: `eu-central-1`, default env: `dev`)
+- Example for a custom deployment `./deploy.sh us-west-2 prod`
 
 ### Invoke the image optimizer
-
 - Upload an image on the source S3 bucket.
     - Run `aws s3 cp <local_path>/image_name.png s3://<YOUR_AWS_ACCOUNT_ID>-source-bucket`
 - Download the optimized image from the destination S3 bucket.
@@ -87,11 +67,7 @@ During the deployment, you will be asked for some parameters:
 There are some images provided for you inside the `SourceImages` folder.
 
 ### Delete the infrastructure
-
-- Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-source-bucket --recursive` to empty the source S3 bucket.
-- Run `aws s3 rm s3://<YOUR_AWS_ACCOUNT_ID>-destination-bucket --recursive` to empty the destination S3 bucket.
-- Run `sam delete` to delete the infrastructure.
+- From the root of the project run `./delete.sh` (default region: `eu-central-1`, default env: `dev`)
 
 ## How to run unit tests
-
 - Run `dotnet test`

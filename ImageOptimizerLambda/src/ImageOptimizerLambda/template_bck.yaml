@@ -1,12 +1,7 @@
 ---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: An application to process and transform images effortlessly in the cloud
-Resources:  
-  # S3 Destination Bucket
-  S3DestinationBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: !Sub "${AWS::AccountId}-destination-bucket"
+Resources:
   
   # Lambda IAM Role
   LambdaExecutionRole:
@@ -21,19 +16,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
-      Policies:
-        - PolicyName: S3AccessPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - s3:GetObject
-                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-source-bucket/*"
-              - Effect: Allow
-                Action:
-                  - s3:PutObject
-                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-destination-bucket/*"
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
   
   # Lambda Function
   ImageOptimizerLambda:
@@ -56,13 +39,13 @@ Resources:
           S3_DESTINATION_BUCKET_NAME: !Sub "${AWS::AccountId}-destination-bucket"
   
   # Permission for S3 to invoke Lambda
-  LambdaInvokePermission:
+  S3InvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !Ref ImageOptimizerLambda
       Action: lambda:InvokeFunction
       Principal: s3.amazonaws.com
-      SourceArn: !Sub 'arn:aws:s3:::${AWS::AccountId}-source-bucket'
+      SourceArn: !Sub "${S3SourceBucket}/*"
   
   # S3 Source Bucket
   S3SourceBucket:
@@ -73,3 +56,9 @@ Resources:
         LambdaConfigurations:
           - Event: s3:ObjectCreated:*
             Function: !GetAtt ImageOptimizerLambda.Arn
+  
+  # S3 Destination Bucket
+  S3DestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-destination-bucket"
