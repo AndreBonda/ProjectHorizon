@@ -1,4 +1,5 @@
-# ProjectHorizon
+# Project Horizon
+<img src="docs/icon.png" style="width: 200px; border-radius: 20px;" alt="icon">
 
 ## Description
 Imagine a world where images are processed and transformed effortlessly in the cloud.  
