@@ -10,6 +10,7 @@
     <!-- Generate ready to run images during publishing to improve cold start time. -->
     <PublishReadyToRun>true</PublishReadyToRun>
     <LangVersion>12</LangVersion>
+    <GenerateServerlessTemplate>false</GenerateServerlessTemplate>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Amazon.Lambda.Annotations" Version="1.7.0" />

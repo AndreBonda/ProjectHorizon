@@ -1,0 +1,120 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: An application to process and transform images effortlessly in the cloud
+Resources:
+  # ===== S3 Bucket =====
+  # Destination Bucket
+  S3DestinationBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-destination-bucket"
+  
+  # Source Bucket
+  S3SourceBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-source-bucket"
+      NotificationConfiguration:
+        LambdaConfigurations:
+          - Event: s3:ObjectCreated:*
+            Function: !GetAtt ImageOptimizerLambda.Arn
+  
+  # Lambda invocation permissions
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ImageOptimizerLambda
+      Action: lambda:InvokeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${AWS::AccountId}-source-bucket'
+  
+  # ===== Lambda ImageOptimizer =====
+  # Lambda IAM Role
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      # trust policy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      # managed policy to write logs in cloudwatch
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      # inline policies
+      Policies:
+        - PolicyName: S3AccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-source-bucket/*"
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-destination-bucket/*"
+  
+  # Lambda Function
+  ImageOptimizerLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: ImageOptimizer
+      Runtime: dotnet8
+      Handler: ImageOptimizerLambda::ImageOptimizerLambda.Functions_FunctionHandlerAsync_Generated::FunctionHandlerAsync
+      Code:
+        S3Bucket: !Sub "${AWS::AccountId}-deployment-bucket"
+        S3Key: "lambda-optimizer-deployment.zip"
+      MemorySize: 512
+      Timeout: 30
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Architectures:
+        - x86_64
+      Environment:
+        Variables:
+          S3_SOURCE_BUCKET_NAME: !Sub "${AWS::AccountId}-source-bucket"
+          S3_DESTINATION_BUCKET_NAME: !Sub "${AWS::AccountId}-destination-bucket"
+  
+  # ===== Lambda ImageUrlGenerator =====
+  LambdaUrlGeneratorRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: SourceBucketWrite
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-source-bucket/*"
+          
+            
+  
+  ImageUrlGeneratorLambda:
+    Type: AWS::Lambda::Function
+    Properties: 
+      FunctionName: ImageUrlGenerator
+      Runtime: dotnet8
+      Handler: ImageUrlGeneratorLambda::ImageUrlGeneratorLambda.Functions_FunctionHandlerAsync_Generated::FunctionHandlerAsync
+      Code:
+        S3Bucket: !Sub "${AWS::AccountId}-deployment-bucket"
+        S3Key: "lambda-url-generator-deployment.zip"
+      MemorySize: 512
+      Timeout: 30
+      Architectures:
+        - x86_64
+      Role: !GetAtt LambdaUrlGeneratorRole.Arn

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+        <AWSProjectType>Lambda</AWSProjectType>
+        <!-- This property makes the build directory similar to a publish directory and helps the AWS .NET Lambda Mock Test Tool find project dependencies. -->
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <!-- Generate ready to run images during publishing to improve cold start time. -->
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <RootNamespace>ImageUrlGeneratorLambda</RootNamespace>
+        <GenerateServerlessTemplate>false</GenerateServerlessTemplate>
+    </PropertyGroup>
+    <ItemGroup>
+      <Reference Include="Amazon.Lambda.Annotations">
+        <HintPath>..\..\..\..\..\..\..\.nuget\packages\amazon.lambda.annotations\1.7.0\lib\net8.0\Amazon.Lambda.Annotations.dll</HintPath>
+      </Reference>
+      <Reference Include="Amazon.Lambda.APIGatewayEvents">
+        <HintPath>..\..\..\..\..\.nuget\packages\amazon.lambda.apigatewayevents\2.7.1\lib\net8.0\Amazon.Lambda.APIGatewayEvents.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.Configuration">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.configuration\9.0.10\lib\net8.0\Microsoft.Extensions.Configuration.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.Configuration.Abstractions">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.configuration.abstractions\9.0.10\lib\net8.0\Microsoft.Extensions.Configuration.Abstractions.dll</HintPath>
+      </Reference>
+      <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\9.0.10\lib\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Amazon.Lambda.Annotations" Version="1.7.0" />
+      <PackageReference Include="Amazon.Lambda.Serialization.SystemTextJson" Version="2.4.4" />
+      <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="4.0.3.9" />
+      <PackageReference Include="AWSSDK.S3" Version="4.0.9.1" />
+      <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
+    </ItemGroup>
+</Project>

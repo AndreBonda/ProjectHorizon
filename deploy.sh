@@ -1,33 +1,20 @@
 #!/bin/bash
 set -e
 
-# Set variables
+# ===== Set variables =====
 REGION=${1:-eu-central-1}
 ENVIRONMENT=${2:-dev}
 STACK_NAME="project-horizon-$ENVIRONMENT"
 echo "Deploying stack..."
 echo "Region ($REGION), Environment ($ENVIRONMENT), STACK: ($STACK_NAME)"
 
-# Get account ID
+# ===== Get account ID =====
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 DEPLOYMENT_BUCKET="$AWS_ACCOUNT_ID-deployment-bucket"
 echo "AWS Account ID: $AWS_ACCOUNT_ID"
 echo "Deployment Bucket: $DEPLOYMENT_BUCKET"
 
-# Project compilation
-echo "Building project..."
-dotnet publish ImageOptimizerLambda/src/ImageOptimizerLambda/ImageOptimizerLambda.csproj \
-  -c Release \
-  -o ./publish \
-  --self-contained false \
-  -r linux-x64
-
-echo "Creating deployment package..."
-cd publish
-zip -r ../lambda-deployment.zip . -q
-cd ..
-
-# Create deployment bucket if does not exist
+# ===== Create deployment bucket if does not exist =====
 echo "Checking deployment bucket..."
 if ! aws s3 ls "s3://$DEPLOYMENT_BUCKET" 2>/dev/null; then
     echo "Creating deployment bucket..."
@@ -37,15 +24,44 @@ else
     echo "Bucket exists: $DEPLOYMENT_BUCKET"
 fi
 
-# Upload code
-echo "Uploading code to S3..."
-aws s3 cp lambda-deployment.zip "s3://$DEPLOYMENT_BUCKET/lambda-deployment.zip" --region $REGION
-echo "Code uploaded to S3"
+# ===== Image Optimizer Lambda dployment =====
+echo "[ImageOptimizerLambda] - Building project..."
+dotnet publish ImageOptimizerLambda/src/ImageOptimizerLambda/ImageOptimizerLambda.csproj \
+  -c Release \
+  -o ./publish-optimizer \
+  --self-contained false \
+  -r linux-x64
+
+echo "[ImageOptimizerLambda] - Creating deployment package..."
+cd publish-optimizer
+zip -r ../lambda-optimizer-deployment.zip . -q
+cd ..
+
+echo "[ImageOptimizerLambda] - Uploading code to S3..."
+aws s3 cp lambda-optimizer-deployment.zip "s3://$DEPLOYMENT_BUCKET/lambda-optimizer-deployment.zip" --region $REGION
+echo "[ImageOptimizerLambda] - Code uploaded to S3"
+
+# ===== Image Url Generator Lambda dployment =====
+echo "[ImageUrlGeneratorLambda] - Building project..."
+dotnet publish ImageUrlGeneratorLambda/src/ImageUrlGeneratorLambda/ImageUrlGeneratorLambda.csproj \
+  -c Release \
+  -o ./publish-url-generator \
+  --self-contained false \
+  -r linux-x64
+
+echo "[ImageUrlGeneratorLambda] - Creating deployment package..."
+cd publish-url-generator
+zip -r ../lambda-url-generator-deployment.zip . -q
+cd ..
+
+echo "[ImageUrlGeneratorLambda] - Uploading code to S3..."
+aws s3 cp lambda-url-generator-deployment.zip "s3://$DEPLOYMENT_BUCKET/lambda-url-generator-deployment.zip" --region $REGION
+echo "[ImageUrlGeneratorLambda] - Code uploaded to S3"
 
 # CloudFormation deploy
 echo "Deploying CloudFormation stack..."
 aws cloudformation deploy \
-  --template-file ImageOptimizerLambda/src/ImageOptimizerLambda/template.yaml \
+  --template-file template.yaml \
   --stack-name $STACK_NAME \
   --capabilities CAPABILITY_IAM \
   --region $REGION \
@@ -60,8 +76,10 @@ aws cloudformation describe-stacks \
   --output table 2>/dev/null || echo "No outputs found"
 
 echo "🧹 Cleaning up..."
-rm -f lambda-deployment.zip
-rm -rf publish
+rm -f lambda-optimizer-deployment.zip
+rm -rf publish-optimizer
+rm -f lambda-url-generator-deployment.zip
+rm -rf publish-url-generator
 
 echo "Deployment completed successfully!"
 echo "To test: upload an image to s3://$AWS_ACCOUNT_ID-source-bucket"

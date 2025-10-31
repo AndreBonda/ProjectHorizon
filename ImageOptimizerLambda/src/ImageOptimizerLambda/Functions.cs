@@ -6,7 +6,6 @@ using Amazon.S3.Util;
 using ImageOptimizerLambda.Exceptions;
 using ImageOptimizerLambda.Services;
 using Microsoft.Extensions.Configuration;
-using SixLabors.ImageSharp;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
