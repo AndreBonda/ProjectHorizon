@@ -2,14 +2,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: An application to process and transform images effortlessly in the cloud
 Resources:
-  # ===== S3 Bucket =====
-  # Destination Bucket
+  # ===== S3 Buckets =====
   S3DestinationBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "${AWS::AccountId}-destination-bucket"
   
-  # Source Bucket
   S3SourceBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -19,7 +17,6 @@ Resources:
           - Event: s3:ObjectCreated:*
             Function: !GetAtt ImageOptimizerLambda.Arn
   
-  # Lambda invocation permissions
   LambdaInvokePermission:
     Type: AWS::Lambda::Permission
     Properties:
@@ -29,7 +26,6 @@ Resources:
       SourceArn: !Sub 'arn:aws:s3:::${AWS::AccountId}-source-bucket'
   
   # ===== Lambda ImageOptimizer =====
-  # Lambda IAM Role
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -59,7 +55,6 @@ Resources:
                   - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-destination-bucket/*"
   
-  # Lambda Function
   ImageOptimizerLambda:
     Type: AWS::Lambda::Function
     Properties:
@@ -102,8 +97,6 @@ Resources:
                   - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-source-bucket/*"
           
-            
-  
   ImageUrlGeneratorLambda:
     Type: AWS::Lambda::Function
     Properties: 
@@ -118,3 +111,58 @@ Resources:
       Architectures:
         - x86_64
       Role: !GetAtt LambdaUrlGeneratorRole.Arn
+
+  # ===== API Gateway =====
+  ImageApiGateway:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "Project Horizon Gateway"
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowCredentials: false
+        AllowHeaders:
+          - "Content-Type"
+        AllowMethods:
+          - "GET"
+          - "OPTIONS"
+        AllowOrigins:
+          - "*"
+  
+  ImageApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties: 
+      ApiId: !Ref ImageApiGateway
+      StageName: "prod"
+      AutoDeploy: true
+  
+  ImageApiRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: 
+      ApiId: !Ref ImageApiGateway
+      RouteKey: "GET /presigned-url"
+      Target: !Sub "integrations/${ImageApiIntegration}"
+
+  ImageApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref ImageApiGateway
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub
+        - "arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaArn}/invocations"
+        - LambdaArn: !GetAtt ImageUrlGeneratorLambda.Arn
+      PayloadFormatVersion: "2.0"
+
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref ImageUrlGeneratorLambda
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ImageApiGateway}/*/*"
+
+Outputs:
+  ApiGatewayUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ImageApiGateway}.execute-api.${AWS::Region}.amazonaws.com/prod"
+    Export:
+      Name: !Sub "${AWS::StackName}-ApiUrl"
