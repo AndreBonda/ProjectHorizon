@@ -20,17 +20,12 @@ _Project Horizon_ is an image processing pipeline that optimize images uploaded 
 ## System Design
 
 ### Infrastructure
-As the architecture, I implemented a serverless architecture on AWS as it meets all functional and non-functional requirements.  
-- Despite the limited time available, IaC tools allow for the setup of the infrastructure with minimal effort.
-- AWS events are easy to leverage to implement an event-driven asynchronous system.
-- With the AWS Lambda service, we ensure efficiency and low costs thanks to the pay-per-use pricing model.
+The architecture is easily deployable on AWS through CloudFormation. The system leverages S3 and Lambda services which are integrated through S3 events when a resource is uploaded to the source bucket.<br>
+It can be used through the AWS CLI by uploading/downloading images directly from the S3 buckets.
 
-The system leverages Lambda and S3 services to operate and can be interacted with through CLIs, applications using the AWS SDK, or clients that interact with the system via HTTP and an API Gateway if the application needs to scale.
-<br>
-<br>
-Given the limited time, **the system can only be interacted with through the CLI for now**.
+<u>Development to enable the service through the HTTP protocol is a work in progress.</u>
 
-![project-horizon.drawio.png](docs/project-horizon.drawio.png)
+<img src="docs/ph-cli.drawio.png" style="width: 400px;"/>
 
 ## Balance between speed, storage, and image quality.
 The system uses the [SixLabors.ImageSharp](https://docs.sixlabors.com/articles/imagesharp/index.html?tabs=tabid-1) library to manipulate images and is configured to balance storage efficiency and image quality.  
