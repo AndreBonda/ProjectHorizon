@@ -1,7 +1,6 @@
 # Project Horizon
 <img src="docs/icon.png" style="width: 200px; border-radius: 20px;" alt="icon">
 
-## Description
 Imagine a world where images are processed and transformed effortlessly in the cloud.  
 _Project Horizon_ is an image processing pipeline that optimize images uploaded by users, making them smaller and faster to load without sacrificing visual quality.
 
@@ -18,14 +17,16 @@ _Project Horizon_ is an image processing pipeline that optimize images uploaded 
 - The system includes basic error handling to ensure the robustness of your function.
 
 ## System Design
-
-### Infrastructure
 The architecture is easily deployable on AWS through CloudFormation. The system leverages S3 and Lambda services which are integrated through S3 events when a resource is uploaded to the source bucket.<br>
 It can be used through the AWS CLI by uploading/downloading images directly from the S3 buckets.
 
 <u>Development to enable the service through the HTTP protocol is a work in progress.</u>
 
-<img src="docs/ph-cli.drawio.png" style="width: 400px;"/>
+CLI interaction example:<br>
+<img src="docs/ph-cli.png" style="width: 400px;"/>
+
+HTTP interaction example:<br>
+<img src="docs/ph-http.png" style="width: 400px;"/>
 
 ## Balance between speed, storage, and image quality.
 The system uses the [SixLabors.ImageSharp](https://docs.sixlabors.com/articles/imagesharp/index.html?tabs=tabid-1) library to manipulate images and is configured to balance storage efficiency and image quality.  
@@ -54,11 +55,38 @@ For deploying and running Project Horizon, you need to have:
 - From the root of the project run `./deploy.sh` (default region: `eu-central-1`, default env: `dev`)
 - Example for a custom deployment `./deploy.sh us-west-2 prod`
 
-### Invoke the image optimizer
+### CLI Usage
 - Upload an image on the source S3 bucket.
     - Run `aws s3 cp <local_path>/image_name.png s3://<YOUR_AWS_ACCOUNT_ID>-source-bucket`
 - Download the optimized image from the destination S3 bucket.
     - Run `aws s3 cp s3://<YOUR_AWS_ACCOUNT_ID>-destination-bucket/image_name.webp <local_path> `
+
+### HTTP API Usage
+**1. Get a presigned URL to upload an image:**
+```text
+curl -X GET https://<API_GATEWAY_URL>/prod/presigned-url
+```
+
+Response:
+```json
+{
+    "imageId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "uploadUrl": "https://s3.../presigned-url"
+}
+```
+
+**2. Upload your image using the presigned URL:**
+```text
+curl -X PUT "<UPLOAD_URL_FROM_RESPONSE>" \
+-H "Content-Type: image/png" \
+--data-binary @your-image.png
+```
+
+**3. Get a presigned URL to download the optimized image:**<br>
+*WIP*
+
+**4. Download the optimized image:**<br>
+*WIP*
 
 There are some images provided for you inside the `SourceImages` folder.
 
