@@ -111,6 +111,9 @@ Resources:
       Architectures:
         - x86_64
       Role: !GetAtt LambdaUrlGeneratorRole.Arn
+      Environment:
+        Variables:
+          S3_SOURCE_BUCKET_NAME: !Sub "${AWS::AccountId}-source-bucket"
 
   # ===== API Gateway =====
   ImageApiGateway:

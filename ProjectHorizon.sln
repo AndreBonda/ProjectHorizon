@@ -21,6 +21,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{06774D7B-A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageUrlGeneratorLambda", "ImageUrlGeneratorLambda\src\ImageUrlGeneratorLambda\ImageUrlGeneratorLambda.csproj", "{0B98A9DE-E4A3-4F9A-92E6-F02C71E248F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImageUrlGeneratorLambda.Tests", "ImageUrlGeneratorLambda\test\ImageUrlGeneratorLambda.Tests\ImageUrlGeneratorLambda.Tests.csproj", "{07590B03-8B8A-4D23-8220-EDF6459A3DE5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -46,6 +48,10 @@ Global
 		{0B98A9DE-E4A3-4F9A-92E6-F02C71E248F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0B98A9DE-E4A3-4F9A-92E6-F02C71E248F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0B98A9DE-E4A3-4F9A-92E6-F02C71E248F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07590B03-8B8A-4D23-8220-EDF6459A3DE5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07590B03-8B8A-4D23-8220-EDF6459A3DE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07590B03-8B8A-4D23-8220-EDF6459A3DE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07590B03-8B8A-4D23-8220-EDF6459A3DE5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{A6CF3BEA-8ACC-4F81-880A-7D4E67F199AB} = {D4218812-FBD9-4BDF-971B-74E67A67A648}
@@ -55,5 +61,6 @@ Global
 		{0C498836-0F43-48FC-900E-C8EEA1F37D49} = {BB5A65AC-2BC9-4515-855D-AABB26F3BAF3}
 		{06774D7B-A43A-45A8-9E52-C58C3A9C4B33} = {BB5A65AC-2BC9-4515-855D-AABB26F3BAF3}
 		{0B98A9DE-E4A3-4F9A-92E6-F02C71E248F3} = {0C498836-0F43-48FC-900E-C8EEA1F37D49}
+		{07590B03-8B8A-4D23-8220-EDF6459A3DE5} = {06774D7B-A43A-45A8-9E52-C58C3A9C4B33}
 	EndGlobalSection
 EndGlobal

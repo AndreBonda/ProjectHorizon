@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.0"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
+        <PackageReference Include="NSubstitute" Version="5.3.0" />
+        <PackageReference Include="NUnit" Version="3.14.0"/>
+        <PackageReference Include="NUnit.Analyzers" Version="3.9.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.5.0"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\ImageOptimizerLambda\src\ImageOptimizerLambda\ImageOptimizerLambda.csproj" />
+      <ProjectReference Include="..\..\src\ImageUrlGeneratorLambda\ImageUrlGeneratorLambda.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Amazon.Lambda.TestUtilities">
+        <HintPath>..\..\..\..\..\.nuget\packages\amazon.lambda.testutilities\3.0.1\lib\net8.0\Amazon.Lambda.TestUtilities.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>

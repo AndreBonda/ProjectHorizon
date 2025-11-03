@@ -36,4 +36,9 @@
       <PackageReference Include="AWSSDK.S3" Version="4.0.9.1" />
       <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
     </ItemGroup>
+    <ItemGroup>
+      <None Update="appSettings.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 </Project>

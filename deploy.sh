@@ -24,7 +24,7 @@ else
     echo "Bucket exists: $DEPLOYMENT_BUCKET"
 fi
 
-# ===== Image Optimizer Lambda dployment =====
+# ===== Image Optimizer Lambda deloyment =====
 echo "[ImageOptimizerLambda] - Building project..."
 dotnet publish ImageOptimizerLambda/src/ImageOptimizerLambda/ImageOptimizerLambda.csproj \
   -c Release \
@@ -74,6 +74,27 @@ aws cloudformation describe-stacks \
   --region $REGION \
   --query 'Stacks[0].Outputs[*].[OutputKey,OutputValue]' \
   --output table 2>/dev/null || echo "No outputs found"
+  
+# ===== Force Lambda code update =====
+echo "Force updating Lambda function code..."
+
+# Update ImageOptimizer  
+aws lambda update-function-code \
+  --function-name ImageOptimizer \
+  --s3-bucket "$DEPLOYMENT_BUCKET" \
+  --s3-key "lambda-optimizer-deployment.zip" \
+  --region $REGION \
+  > /dev/null
+
+# Update ImageUrlGenerator
+aws lambda update-function-code \
+  --function-name ImageUrlGenerator \
+  --s3-bucket "$DEPLOYMENT_BUCKET" \
+  --s3-key "lambda-url-generator-deployment.zip" \
+  --region $REGION \
+  > /dev/null
+
+echo "✅ Lambda code force updated!"
 
 echo "🧹 Cleaning up..."
 rm -f lambda-optimizer-deployment.zip
