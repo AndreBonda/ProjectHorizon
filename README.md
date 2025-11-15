@@ -2,7 +2,23 @@
 <img src="docs/icon.png" style="width: 200px; border-radius: 20px;" alt="icon">
 
 Imagine a world where images are processed and transformed effortlessly in the cloud.  
-_Project Horizon_ is an image processing pipeline that optimize images uploaded by users, making them smaller and faster to load without sacrificing visual quality.
+**_Project Horizon_ is an image processing pipeline that optimize images uploaded by users, making them smaller and faster to load without sacrificing visual quality.**
+
+## Table of Contents
+
+- [System Requirements](#system-requirements)
+    - [Functional Requirements](#functional-requirements)
+    - [Non-Functional Requirements](#non-functional-requirements)
+- [System Design](#system-design)
+- [Balance between speed, storage, and image quality](#balance-between-speed-storage-and-image-quality)
+    - [Benchmarks](#benchmarks-maximum-image-dimension-1000-pixels)
+- [How to deploy and run Project Horizon](#how-to-deploy-and-run-project-horizon)
+    - [Deploy the infrastructure to AWS](#deploy-the-infrastructure-to-aws)
+    - [CLI Usage](#cli-usage)
+    - [HTTP API Usage](#http-api-usage)
+    - [Delete the infrastructure](#delete-the-infrastructure)
+- [How to run unit tests](#how-to-run-unit-tests)
+- [CI/CD Pipeline](#cicd-pipeline)
 
 ## System Requirements
 
@@ -43,9 +59,7 @@ As the conversion algorithm, WebP in Lossless mode has been used. WebP is a good
 | source_800_800.png   | 800x800                     | 1.3                | 800x800                  | 0.77            | 7228                        |
 | source_1920_1080.png | 1920x1080                   | 3.9                | 1000x562                 | 0.70            | 7632                        |
 
-
 ## How to deploy and run Project Horizon
-
 For deploying and running Project Horizon, you need to have:
 
 - [An AWS account](https://aws.amazon.com/account/?nc1=h_ls)
@@ -95,3 +109,9 @@ There are some images provided for you inside the `SourceImages` folder.
 
 ## How to run unit tests
 - Run `dotnet test`
+
+## CI/CD Pipeline
+This project uses GitHub Actions for Continuous Integration and Continuous Deployment.
+
+- **CI**: Every push to the `main` branch and every pull request trigger automated tests, ensuring the code compiles successfully and all tests pass.
+- **CD**: WIP
