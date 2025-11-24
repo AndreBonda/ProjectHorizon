@@ -39,7 +39,7 @@ public class Functions
             var s3Request = new GetPreSignedUrlRequest()
             {
                 BucketName = parameter.BucketName,
-                Key = $"{imageId}.png",
+                Key = imageId.ToString(),
                 Verb = HttpVerb.PUT,
                 Expires = DateTime.Now.AddMinutes(parameter.ExpiresInMinutes),
                 ContentType = "image/png",

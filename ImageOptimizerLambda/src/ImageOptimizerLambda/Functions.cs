@@ -39,25 +39,36 @@ public class Functions
         S3EventNotification input,
         ILambdaContext context)
     {
-        Parameters parameters = GetParametersFromConfiguration(_config);
-        string uploadedImageName = input.Records.First().S3.Object.Key;
-        long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
+        string imageId = string.Empty;
+        try
+        {
+            Parameters parameters = GetParametersFromConfiguration(_config);
+            imageId = input.Records.First().S3.Object.Key;
+            long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
 
-        var imageStream = await DownloadImageFromSourceBucket(
-            _s3Client,
-            parameters.SourceBucketName,
-            uploadedImageName,
-            uploadedImageSizeInBytes,
-            parameters.MaxImageSizeInBytes);
+            var imageStream = await DownloadImageFromSourceBucketAsync(
+                _s3Client,
+                parameters.SourceBucketName,
+                imageId,
+                uploadedImageSizeInBytes,
+                parameters.MaxImageSizeInBytes);
 
-        using var optimizedImageStream =
-            await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
-        var newImageName = imageOptimizerService.GenerateFileName(uploadedImageName);
-        await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, newImageName,
-            optimizedImageStream);
-        var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, newImageName);
-        await SaveProcessingStatusAsync(uploadedImageName, downloadUrl);
-        context.Logger.LogInformation($"The image {uploadedImageName} was processed successfully.");
+            using var optimizedImageStream =
+                await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
+            var imageFullName = imageOptimizerService.GenerateFileName(imageId);
+            await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, imageFullName,
+                optimizedImageStream);
+            var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, imageFullName);
+            await RecordImageProcessingAsync(imageId, downloadUrl);
+
+            context.Logger.LogInformation($"The image {imageId} was processed successfully.");
+        }
+        catch (Exception e)
+        {
+            await RecordImageProcessingFailureAsync(imageId);
+            throw;
+        }
+
     }
 
     private Parameters GetParametersFromConfiguration(IConfiguration config) =>
@@ -68,10 +79,10 @@ public class Functions
             DestinationBucketName: config.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value!
         );
 
-    private async Task<Stream> DownloadImageFromSourceBucket(
+    private async Task<Stream> DownloadImageFromSourceBucketAsync(
         IAmazonS3 s3Client,
         string sourceBucketName,
-        string imageName,
+        string imageId,
         long uploadedImageSizeInBytes,
         long maxImageSizeBytes)
     {
@@ -80,16 +91,16 @@ public class Functions
             if (uploadedImageSizeInBytes > maxImageSizeBytes)
             {
                 throw new TooLargeImageException(
-                    $"Uploaded image ${imageName} is too large (${uploadedImageSizeInBytes} bytes) to be the maximum size of {maxImageSizeBytes} bytes.");
+                    $"Uploaded image ${imageId} is too large (${uploadedImageSizeInBytes} bytes) to be the maximum size of {maxImageSizeBytes} bytes.");
             }
 
-            var response = await s3Client.GetObjectAsync(sourceBucketName, imageName);
+            var response = await s3Client.GetObjectAsync(sourceBucketName, imageId);
             return response.ResponseStream;
         }
         catch (Exception e)
         {
             throw new ImageDownloadFromSourceBucketException(
-                $"Error occurred during the download of the image {imageName}.", e);
+                $"Error occurred during the download of the image {imageId}.", e);
         }
     }
 
@@ -133,33 +144,70 @@ public class Functions
         }
     }
 
-    private async Task SaveProcessingStatusAsync(string uploadedImageName, string downloadUrl)
+    private async Task RecordImageProcessingAsync(string imageId, string downloadUrl)
     {
-        await _dynamoDbClient.PutItemAsync(new PutItemRequest
+        try
         {
-            TableName = "Images",
-            Item = new Dictionary<string, AttributeValue>()
+            await _dynamoDbClient.PutItemAsync(new PutItemRequest
             {
+                TableName = "Images",
+                Item = new Dictionary<string, AttributeValue>()
                 {
-                    "ImageId", new AttributeValue
                     {
-                        S = uploadedImageName
-                    }
-                },
-                {
-                    "Status", new AttributeValue
+                        "ImageId", new AttributeValue
+                        {
+                            S = imageId
+                        }
+                    },
                     {
-                        S = "Completed"
-                    }
-                },
-                {
-                    "DownloadImageUrl", new AttributeValue
+                        "Status", new AttributeValue
+                        {
+                            S = "Completed"
+                        }
+                    },
                     {
-                        S = downloadUrl
+                        "DownloadImageUrl", new AttributeValue
+                        {
+                            S = downloadUrl
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
+        catch (Exception e)
+        {
+            throw new RecordImageProcessingException($"Error while registering the processing status for the image {imageId}", e);
+        }
+    }
+    
+    private async Task RecordImageProcessingFailureAsync(string imageId)
+    {
+        try
+        {
+            await _dynamoDbClient.PutItemAsync(new PutItemRequest
+            {
+                TableName = "Images",
+                Item = new Dictionary<string, AttributeValue>()
+                {
+                    {
+                        "ImageId", new AttributeValue
+                        {
+                            S = imageId
+                        }
+                    },
+                    {
+                        "Status", new AttributeValue
+                        {
+                            S = "Error"
+                        }
+                    },
+                }
+            });
+        }
+        catch (Exception e)
+        {
+            throw new RecordImageProcessingException($"Error while registering the processing status for the image {imageId}", e);
+        }
     }
 
     private async Task<MemoryStream> GetOptimizedImage(
