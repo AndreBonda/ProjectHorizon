@@ -3,7 +3,6 @@ using Amazon.Lambda.Core;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Amazon.S3.Util;
-using ImageOptimizerLambda.Exceptions;
 using ImageOptimizerLambda.Services;
 using Microsoft.Extensions.Configuration;
 using Xunit;
@@ -65,7 +64,7 @@ public class FunctionTest
               """);
 
         // Act & Assert
-        await Assert.ThrowsAsync<ImageDownloadFromSourceBucketException>(async () =>
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
         {
             await _functions.FunctionHandlerAsync(
                 _imageOptimizerService,
