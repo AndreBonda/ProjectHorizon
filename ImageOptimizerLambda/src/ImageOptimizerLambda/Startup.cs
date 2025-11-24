@@ -1,8 +1,8 @@
 using Amazon.Lambda.Annotations;
-using Amazon.S3;
 using ImageOptimizerLambda.Services;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace ImageOptimizerLambda;
 
@@ -18,11 +18,14 @@ public class Startup
             .AddEnvironmentVariables()
             .Build();
     }
-    
-    public void ConfigureServices(IServiceCollection services)
+
+    public HostApplicationBuilder ConfigureHostBuilder()
     {
-        services.AddSingleton(Configuration);
-        services.AddScoped<IAmazonS3, AmazonS3Client>();
-        services.AddScoped<IImageOptimizerService, ImageOptimizerService>();
+        var hostBuilder = new HostApplicationBuilder();
+        hostBuilder.Services.AddSingleton(Configuration);
+        hostBuilder.Services.AddAWSService<Amazon.S3.IAmazonS3>();
+        hostBuilder.Services.AddAWSService<Amazon.DynamoDBv2.IAmazonDynamoDB>();
+        hostBuilder.Services.AddScoped<IImageOptimizerService, ImageOptimizerService>();
+        return hostBuilder;
     }
 }

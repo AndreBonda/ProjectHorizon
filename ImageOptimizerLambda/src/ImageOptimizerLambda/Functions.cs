@@ -1,3 +1,4 @@
+using Amazon.DynamoDBv2;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Annotations;
 using Amazon.S3;
@@ -14,26 +15,35 @@ namespace ImageOptimizerLambda;
 
 public class Functions
 {
+    private readonly IConfiguration _config;
+    private readonly IAmazonS3 _s3Client;
+    private readonly IAmazonDynamoDB _dynamoDbClient;
+
     private record Parameters(
         int MaxImageDimension,
         long MaxImageSizeInBytes,
         string SourceBucketName,
         string DestinationBucketName);
 
+    public Functions(IConfiguration configuration, IAmazonS3 s3Client, IAmazonDynamoDB dynamoDbClient)
+    {
+        _config = configuration;
+        _s3Client = s3Client;
+        _dynamoDbClient = dynamoDbClient;
+    }
+
     [LambdaFunction]
     public async Task FunctionHandlerAsync(
-        [FromServices] IConfiguration config,
-        [FromServices] IAmazonS3 s3Client,
         [FromServices] IImageOptimizerService imageOptimizerService,
         S3EventNotification input,
         ILambdaContext context)
     {
-        Parameters parameters = GetParametersFromConfiguration(config);
+        Parameters parameters = GetParametersFromConfiguration(_config);
         string uploadedImageName = input.Records.First().S3.Object.Key;
         long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
 
         var imageStream = await DownloadImageFromSourceBucket(
-            s3Client,
+            _s3Client,
             parameters.SourceBucketName,
             uploadedImageName,
             uploadedImageSizeInBytes,
@@ -44,8 +54,10 @@ public class Functions
 
         var newImageName = imageOptimizerService.GenerateFileName(uploadedImageName);
 
-        await UploadImageToDestinationBucket(s3Client, parameters.DestinationBucketName, newImageName,
+        await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, newImageName,
             optimizedImageStream);
+
+
 
         context.Logger.LogInformation($"The image {uploadedImageName} was processed successfully.");
     }

@@ -1,3 +1,4 @@
+using Amazon.DynamoDBv2;
 using Amazon.Lambda.Core;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -14,6 +15,7 @@ public class FunctionTest
 {
     private readonly IConfiguration _configuration;
     private readonly IAmazonS3 _s3Client;
+    private readonly IAmazonDynamoDB _dynamoDbClient;
     private readonly IImageOptimizerService _imageOptimizerService;
     private readonly ILambdaContext _lambdaContext;
     private readonly Functions _functions;
@@ -23,10 +25,11 @@ public class FunctionTest
         _configuration = Substitute.For<IConfiguration>();
         SetupConfiguration();
         _s3Client = Substitute.For<IAmazonS3>();
+        _dynamoDbClient = Substitute.For<IAmazonDynamoDB>();
         _imageOptimizerService = Substitute.For<IImageOptimizerService>();
         _lambdaContext = Substitute.For<ILambdaContext>();
         _lambdaContext.Logger.Returns(Substitute.For<ILambdaLogger>());
-        _functions = new Functions();
+        _functions = new Functions(_configuration, _s3Client, _dynamoDbClient);
     }
 
     private void SetupConfiguration()
@@ -65,8 +68,6 @@ public class FunctionTest
         await Assert.ThrowsAsync<ImageDownloadFromSourceBucketException>(async () =>
         {
             await _functions.FunctionHandlerAsync(
-                _configuration,
-                _s3Client,
                 _imageOptimizerService,
                 s3Event,
                 _lambdaContext);
@@ -104,8 +105,6 @@ public class FunctionTest
 
         // Act
         await _functions.FunctionHandlerAsync(
-            _configuration,
-            _s3Client,
             _imageOptimizerService,
             s3Event,
             _lambdaContext);
