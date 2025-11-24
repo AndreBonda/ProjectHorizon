@@ -44,6 +44,7 @@ Resources:
                 Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-source-bucket/*"
               - Effect: Allow
                 Action:
+                  - s3:GetObject
                   - s3:PutObject
                 Resource: !Sub "arn:aws:s3:::${AWS::AccountId}-destination-bucket/*"
         - PolicyName: DynamoDBAccess

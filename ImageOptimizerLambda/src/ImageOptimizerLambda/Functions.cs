@@ -1,4 +1,5 @@
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.Core;
 using Amazon.Lambda.Annotations;
 using Amazon.S3;
@@ -51,14 +52,11 @@ public class Functions
 
         using var optimizedImageStream =
             await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
-
         var newImageName = imageOptimizerService.GenerateFileName(uploadedImageName);
-
         await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, newImageName,
             optimizedImageStream);
-
-
-
+        var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, newImageName);
+        await SaveProcessingStatusAsync(uploadedImageName, downloadUrl);
         context.Logger.LogInformation($"The image {uploadedImageName} was processed successfully.");
     }
 
@@ -115,6 +113,53 @@ public class Functions
             throw new ImageUploadToDestinationBucketException(
                 $"Error occurred during the upload of the image {imageName}.", e);
         }
+    }
+
+    private async Task<string> GenerateDownloadPresignedUrlAsync(IAmazonS3 s3Client, string destinationBucketName, string imageName)
+    {
+        try
+        {
+            return await s3Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
+            {
+                BucketName = destinationBucketName,
+                Key = imageName,
+                Verb = HttpVerb.GET,
+                Expires = DateTime.Now.AddMinutes(15)
+            });
+        }
+        catch (Exception e)
+        {
+            throw new DownloadPresignedUrlGenerationException($"Error occurred during the generation of the presigned url for the image {imageName}", e);
+        }
+    }
+
+    private async Task SaveProcessingStatusAsync(string uploadedImageName, string downloadUrl)
+    {
+        await _dynamoDbClient.PutItemAsync(new PutItemRequest
+        {
+            TableName = "Images",
+            Item = new Dictionary<string, AttributeValue>()
+            {
+                {
+                    "ImageId", new AttributeValue
+                    {
+                        S = uploadedImageName
+                    }
+                },
+                {
+                    "Status", new AttributeValue
+                    {
+                        S = "Completed"
+                    }
+                },
+                {
+                    "DownloadImageUrl", new AttributeValue
+                    {
+                        S = downloadUrl
+                    }
+                }
+            }
+        });
     }
 
     private async Task<MemoryStream> GetOptimizedImage(
