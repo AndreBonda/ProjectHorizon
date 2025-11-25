@@ -1,0 +1,44 @@
+name: CD
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+env:
+  AWS_REGION: eu-central-1
+  ENVIRONMENT: prod
+jobs:
+  deploy:
+    # Esegue solo se CI è passato E il trigger era un tag v*
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Make deploy script executable
+        run: chmod +x ./deploy.sh
+      
+      - name: Deploy to AWS
+        run: ./deploy.sh ${{ env.AWS_REGION }} ${{ env.ENVIRONMENT }}
+      
+      - name: Get deployment outputs
+        id: outputs
+        run: |
+          echo "Getting stack outputs..."
+          aws cloudformation describe-stacks \
+            --stack-name project-horizon-${{ env.ENVIRONMENT }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[*].[OutputKey,OutputValue]' \
+            --output table || echo "No outputs found"
