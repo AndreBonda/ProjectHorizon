@@ -46,8 +46,14 @@ public class Functions
             Parameters parameters = GetParametersFromConfiguration(_config);
             imageId = input.Records.First().S3.Object.Key;
             long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
+
+            if (await CheckIfImageAlreadyProcessedSuccessfullyAsync(imageId))
+            {
+                context.Logger.LogInformation($"Image {imageId} was already processed successfully.");
+                return;
+            }
+
             var imageStream = await DownloadImageFromSourceBucketAsync(
-                _s3Client,
                 parameters.SourceBucketName,
                 imageId,
                 uploadedImageSizeInBytes,
@@ -58,14 +64,12 @@ public class Functions
             await using (optimizedImage.Content)
             {
                 await UploadImageToDestinationBucket(
-                    _s3Client,
                     parameters.DestinationBucketName,
                     optimizedImage.NameWithFilExt,
                     optimizedImage.Content);
             }
 
             var downloadUrl = await GenerateDownloadPresignedUrlAsync(
-                _s3Client,
                 parameters.DestinationBucketName,
                 optimizedImage.NameWithFilExt,
                 parameters.UrlExpirationMinutes);
@@ -98,8 +102,32 @@ public class Functions
             DestinationBucketName: config.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value!
         );
 
+    /// <summary>
+    /// Provides idempotency by checking if the image was already processed successfully.
+    /// </summary>
+    private async Task<bool> CheckIfImageAlreadyProcessedSuccessfullyAsync(string imageId)
+    {
+        var response = await _dynamoDbClient.GetItemAsync(
+            "Images",
+            new Dictionary<string, AttributeValue>()
+            {
+                {
+                    "ImageId", new AttributeValue
+                    {
+                        S = imageId
+                    }
+                }
+            });
+
+        var item = response.Item;
+        if (item == null || item.Count == 0)
+        {
+            return false;
+        }
+        return item.GetValueOrDefault("Status")?.S == "Completed";
+    }
+
     private async Task<Stream> DownloadImageFromSourceBucketAsync(
-        IAmazonS3 s3Client,
         string sourceBucketName,
         string imageId,
         long uploadedImageSizeInBytes,
@@ -112,18 +140,17 @@ public class Functions
                 $"Image {imageId} too large ({uploadedImageSizeInBytes} > {maxImageSizeBytes} bytes).");
         }
 
-        var response = await s3Client.GetObjectAsync(sourceBucketName, imageId);
+        var response = await _s3Client.GetObjectAsync(sourceBucketName, imageId);
         return response.ResponseStream;
     }
 
     private async Task UploadImageToDestinationBucket(
-        IAmazonS3 s3Client,
         string destinationBucketName,
         string imageName,
         Stream imageStream)
     {
 
-        await s3Client.PutObjectAsync(new PutObjectRequest
+        await _s3Client.PutObjectAsync(new PutObjectRequest
         {
             BucketName = destinationBucketName,
             Key = imageName,
@@ -131,9 +158,9 @@ public class Functions
         });
     }
 
-    private async Task<string> GenerateDownloadPresignedUrlAsync(IAmazonS3 s3Client, string destinationBucketName, string imageName, int expiration)
+    private async Task<string> GenerateDownloadPresignedUrlAsync(string destinationBucketName, string imageName, int expiration)
     {
-        return await s3Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
+        return await _s3Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
         {
             BucketName = destinationBucketName,
             Key = imageName,
@@ -166,6 +193,12 @@ public class Functions
                     {
                         S = downloadUrl
                     }
+                },
+                {
+                    "DateTime", new AttributeValue
+                    {
+                        S = DateTime.Now.ToString("O")
+                    }
                 }
             }
         });
@@ -190,6 +223,12 @@ public class Functions
                         S = "Error"
                     }
                 },
+                {
+                    "DateTime", new AttributeValue
+                    {
+                        S = DateTime.Now.ToString("O")
+                    }
+                }
             }
         });
     }
