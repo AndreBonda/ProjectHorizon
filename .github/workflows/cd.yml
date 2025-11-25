@@ -5,12 +5,17 @@ on:
   push:
     tags:
       - "v*"
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
 env:
   AWS_REGION: eu-central-1
   ENVIRONMENT: prod
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v5 # download code into the runner
       - name: Setup .NET
