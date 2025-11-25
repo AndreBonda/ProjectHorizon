@@ -7,20 +7,13 @@ namespace ImageOptimizerLambda.Services;
 public class ImageOptimizerService : IImageOptimizerService
 {
     /// <inheritdoc />
-    public async Task<MemoryStream> OptimizeImageAsync(Stream? inputStream, int maxImageDimension)
+    public async Task<(string Id, string NameWithFilExt, MemoryStream Content)> OptimizeImageAsync(string imageId, Stream? inputStream, int maxImageDimension)
     {
-        if (inputStream is null)
-            return new MemoryStream();
-
-        using var image = await Image.LoadAsync(inputStream);
-        ResizeImage(image, maxImageDimension);
-        var webpImage = await ConvertToWebpAsync(image);
-        return webpImage;
+        string nameWithExt = imageId + ".webp";
+        var stream = await OptimizeImageAsync(inputStream, maxImageDimension);
+        return (imageId, nameWithExt, stream);
     }
-
-    /// <inheritdoc />
-    public string GenerateFileName(string originalName) => originalName.Split('.')[0] + ".webp";
-
+    
     /// <inheritdoc />
     public void ResizeImage(Image image, int maxImageDimension)
     {
@@ -37,6 +30,23 @@ public class ImageOptimizerService : IImageOptimizerService
         {
             image.Mutate(x => x.Resize(0, maxImageDimension, KnownResamplers.Lanczos3));
         }
+    }
+    
+    /// <summary>
+    /// Reduces the memory usage of the original image by applying compression and resizing it to fit within the specified maximum dimensions.
+    /// </summary>
+    /// <param name="inputStream">The input stream containing the image to optimize.</param>
+    /// <param name="maxImageDimension">The maximum allowed dimension (in pixels) for the longest side of the image.</param>
+    /// <returns>A memory stream containing the optimized image.</returns>
+    private async Task<MemoryStream> OptimizeImageAsync(Stream? inputStream, int maxImageDimension)
+    {
+        if (inputStream is null)
+            return new MemoryStream();
+
+        using var image = await Image.LoadAsync(inputStream);
+        ResizeImage(image, maxImageDimension);
+        var webpImage = await ConvertToWebpAsync(image);
+        return webpImage;
     }
 
     private async Task<MemoryStream> ConvertToWebpAsync(Image originalImage)

@@ -7,16 +7,16 @@ namespace ImageOptimizerLambda.Tests;
 
 public class ImageOptimizerServiceTest
 {
-    private ImageOptimizerService _imageOptimizerService = new();
+    private readonly ImageOptimizerService _imageOptimizerService = new();
 
     [Fact]
     public async Task OptimizeImage_ReturnsAndEmptyStream_WhenTheInputIsNull()
     {
         // Arrange & Act
-        var resultStream = await _imageOptimizerService.OptimizeImageAsync(null, 100);
+        var image = await _imageOptimizerService.OptimizeImageAsync("image-id", null, 100);
 
         // Assert
-        Assert.True(resultStream.Length == 0);
+        Assert.True(image.Content.Length == 0);
     }
 
     [Fact]
@@ -29,22 +29,11 @@ public class ImageOptimizerServiceTest
         inputStream.Position = 0;
 
         // Act
-        var resultStream = await _imageOptimizerService.OptimizeImageAsync(inputStream, 100);
+        var image = await _imageOptimizerService.OptimizeImageAsync("image-id", inputStream, 100);
 
         // Assert
-        Assert.True(resultStream.Length > 0);
-    }
-
-    [Theory]
-    [InlineData("file", "file.webp")]
-    [InlineData("file.png", "file.webp")]
-    public void GetWebpImageName_SetsWebpFileExtension(string fileName, string expectedFileName)
-    {
-        // Act
-        var actualName = _imageOptimizerService.GenerateFileName(fileName);
-
-        // Assert
-        Assert.Equal(expectedFileName, actualName);
+        Assert.True(image.Content.Length > 0);
+        Assert.Equal("image-id.webp", image.NameWithFilExt);
     }
 
     [Theory]

@@ -46,7 +46,6 @@ public class Functions
             Parameters parameters = GetParametersFromConfiguration(_config);
             imageId = input.Records.First().S3.Object.Key;
             long uploadedImageSizeInBytes = input.Records.First().S3.Object.Size;
-
             var imageStream = await DownloadImageFromSourceBucketAsync(
                 _s3Client,
                 parameters.SourceBucketName,
@@ -54,14 +53,24 @@ public class Functions
                 uploadedImageSizeInBytes,
                 parameters.MaxImageSizeInBytes);
 
-            using var optimizedImageStream =
-                await GetOptimizedImage(imageOptimizerService, imageStream, parameters.MaxImageDimension);
-            var imageFullName = imageOptimizerService.GenerateFileName(imageId);
-            await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, imageFullName,
-                optimizedImageStream);
-            var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, imageFullName, parameters.UrlExpirationMinutes);
-            await RecordImageProcessingAsync(imageId, downloadUrl);
+            var optimizedImage = await imageOptimizerService.OptimizeImageAsync(imageId, imageStream, parameters.MaxImageDimension);
 
+            await using (optimizedImage.Content)
+            {
+                await UploadImageToDestinationBucket(
+                    _s3Client,
+                    parameters.DestinationBucketName,
+                    optimizedImage.NameWithFilExt,
+                    optimizedImage.Content);
+            }
+
+            var downloadUrl = await GenerateDownloadPresignedUrlAsync(
+                _s3Client,
+                parameters.DestinationBucketName,
+                optimizedImage.NameWithFilExt,
+                parameters.UrlExpirationMinutes);
+
+            await RecordImageProcessingAsync(imageId, downloadUrl);
             context.Logger.LogInformation($"The image {imageId} was processed successfully.");
         }
         catch (Exception e)
@@ -78,7 +87,6 @@ public class Functions
             }
             throw;
         }
-
     }
 
     private Parameters GetParametersFromConfiguration(IConfiguration config) =>
@@ -185,10 +193,4 @@ public class Functions
             }
         });
     }
-
-    private async Task<MemoryStream> GetOptimizedImage(
-        IImageOptimizerService imageOptimizerService,
-        Stream originalImage,
-        int maxImageDimension
-    ) => await imageOptimizerService.OptimizeImageAsync(originalImage, maxImageDimension);
 }
