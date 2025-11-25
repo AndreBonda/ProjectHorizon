@@ -455,3 +455,5 @@ $RECYCLE.BIN/
 /ImageOptimizerLambda/src/ImageOptimizerLambda/serverless.template
 
 serverless.template
+
+example-requests
