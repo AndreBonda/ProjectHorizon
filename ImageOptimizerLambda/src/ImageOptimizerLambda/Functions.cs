@@ -23,7 +23,8 @@ public class Functions
         int MaxImageDimension,
         long MaxImageSizeInBytes,
         string SourceBucketName,
-        string DestinationBucketName);
+        string DestinationBucketName,
+        int UrlExpirationMinutes);
 
     public Functions(IConfiguration configuration, IAmazonS3 s3Client, IAmazonDynamoDB dynamoDbClient)
     {
@@ -58,7 +59,7 @@ public class Functions
             var imageFullName = imageOptimizerService.GenerateFileName(imageId);
             await UploadImageToDestinationBucket(_s3Client, parameters.DestinationBucketName, imageFullName,
                 optimizedImageStream);
-            var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, imageFullName);
+            var downloadUrl = await GenerateDownloadPresignedUrlAsync(_s3Client, parameters.DestinationBucketName, imageFullName, parameters.UrlExpirationMinutes);
             await RecordImageProcessingAsync(imageId, downloadUrl);
 
             context.Logger.LogInformation($"The image {imageId} was processed successfully.");
@@ -84,6 +85,7 @@ public class Functions
         new(
             MaxImageDimension: Convert.ToInt32(config.GetRequiredSection("Settings:MaxImageDimension").Value),
             MaxImageSizeInBytes: Convert.ToInt64(config.GetRequiredSection("Settings:MaxImageSizeInBytes").Value),
+            UrlExpirationMinutes: Convert.ToInt32(config.GetRequiredSection("Settings:UrlExpirationMinutes").Value),
             SourceBucketName: config.GetRequiredSection("S3_SOURCE_BUCKET_NAME").Value!,
             DestinationBucketName: config.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value!
         );
@@ -121,14 +123,14 @@ public class Functions
         });
     }
 
-    private async Task<string> GenerateDownloadPresignedUrlAsync(IAmazonS3 s3Client, string destinationBucketName, string imageName)
+    private async Task<string> GenerateDownloadPresignedUrlAsync(IAmazonS3 s3Client, string destinationBucketName, string imageName, int expiration)
     {
         return await s3Client.GetPreSignedURLAsync(new GetPreSignedUrlRequest
         {
             BucketName = destinationBucketName,
             Key = imageName,
             Verb = HttpVerb.GET,
-            Expires = DateTime.UtcNow.AddMinutes(15)
+            Expires = DateTime.UtcNow.AddMinutes(expiration)
         });
     }
 

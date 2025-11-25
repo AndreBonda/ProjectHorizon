@@ -35,6 +35,7 @@ public class FunctionTest
     {
         _configuration.GetRequiredSection("Settings:MaxImageDimension").Value.Returns("1000");
         _configuration.GetRequiredSection("Settings:MaxImageSizeInBytes").Value.Returns("1000");
+        _configuration.GetRequiredSection("Settings:UrlExpirationMinutes").Value.Returns("30");
         _configuration.GetRequiredSection("S3_SOURCE_BUCKET_NAME").Value.Returns("source-bucket-name");
         _configuration.GetRequiredSection("S3_DESTINATION_BUCKET_NAME").Value.Returns("destination-bucket-name");
     }
