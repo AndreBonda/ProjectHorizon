@@ -5,16 +5,19 @@ on:
   workflow_run:
     workflows: ["CI"]
     types: [completed]
-    branches: [main]
 env:
   AWS_REGION: eu-central-1
   ENVIRONMENT: prod
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' && contains(github.event.workflow_run.head_commit.message, 'v') }}
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
     steps:
       - uses: actions/checkout@v5 # download code into the runner
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
