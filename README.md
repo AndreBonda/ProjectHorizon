@@ -96,11 +96,26 @@ curl -X PUT "<UPLOAD_URL_FROM_RESPONSE>" \
 --data-binary @your-image.png
 ```
 
-**3. Get a presigned URL to download the optimized image:**<br>
-*WIP*
+**3. Get information and presigned URL to download the optimized image:**
+```text
+curl -X GET https://<API_GATEWAY_URL>/prod/optimized-image/{imageId}
+```
 
-**4. Download the optimized image:**<br>
-*WIP*
+Response:
+```json
+{
+    "imageId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "status": "Success",
+    "url": "https://s3.../optimized-image-presigned-url",
+    "dateTime": "2025-11-26T13:02:32.123Z"
+}
+```
+
+**4. Download the optimized image:**
+```text
+curl -X GET "<DOWNLOAD_URL_FROM_RESPONSE>" \
+-o optimized-image.webp
+```
 
 There are some images provided for you inside the `SourceImages` folder.
 
