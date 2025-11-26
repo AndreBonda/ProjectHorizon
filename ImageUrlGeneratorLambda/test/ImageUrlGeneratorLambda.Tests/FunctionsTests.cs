@@ -1,5 +1,5 @@
-using System.Net;
 using Amazon.DynamoDBv2;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.TestUtilities;
 using Amazon.S3;
@@ -16,7 +16,7 @@ public class Tests
     private IConfiguration _mockConfig;
     private Functions _functions;
     private TestLambdaContext _context;
-    
+
     [SetUp]
     public void Setup()
     {
@@ -35,7 +35,7 @@ public class Tests
         _mockS3Client.Dispose();
         _dynamoDbClient.Dispose();
     }
-    
+
     [Test]
     public async Task FunctionHandlerAsync_Success_ReturnsOkWithPresignedUrl()
     {
@@ -45,12 +45,21 @@ public class Tests
             .Returns(expectedUrl);
 
         // Act
-        var result = await _functions.GetPresignedUrl();
+        var result = await _functions.FunctionHandlerAsync(new APIGatewayHttpApiV2ProxyRequest()
+            {
+                RawPath = "/stage/presigned-url",
+                RequestContext = new APIGatewayHttpApiV2ProxyRequest.ProxyRequestContext()
+                {
+                    Stage = "stage",
+                }
+            },
+            _context);
 
         // Assert
         Assert.That(result.StatusCode, Is.EqualTo(200));
+        Assert.That(result.Body, Contains.Substring(expectedUrl));
     }
-    
+
     [Test]
     public async Task GetParametersFromConfiguration_InvalidExpirationMinutes_ThrowsArgumentException()
     {
@@ -60,11 +69,11 @@ public class Tests
 
         // Act
         var result = await _functions.GetPresignedUrl();
-        
+
         // Assert
         Assert.That(result.StatusCode, Is.EqualTo(500));
     }
-    
+
     [Test]
     public async Task GetParametersFromConfiguration_EmptyBucketName_ThrowsArgumentException()
     {
@@ -73,8 +82,154 @@ public class Tests
 
         // Act
         var result = await _functions.GetPresignedUrl();
-        
+
         // Assert
         Assert.That(result.StatusCode, Is.EqualTo(500));
+
+
+    }
+
+    [Test]
+    public async Task FunctionHandler_WithNonExistingEndpoint_Returns404NotFound()
+    {
+        // Arrange
+        var request = new APIGatewayHttpApiV2ProxyRequest()
+        {
+            RawPath = "/stage/non-existing-endpoint",
+            RequestContext = new APIGatewayHttpApiV2ProxyRequest.ProxyRequestContext()
+            {
+                Stage = "stage",
+            }
+        };
+
+        // Act
+        var result = await _functions.FunctionHandlerAsync(request, _context);
+
+        // Assert
+        Assert.That(result.StatusCode, Is.EqualTo(404));
+    }
+
+    [Test]
+    public async Task GetOptimizedImage_WithoutImageId_Returns400BadRequest()
+    {
+        // Arrange
+        var request = new APIGatewayHttpApiV2ProxyRequest()
+        {
+            RawPath = "/stage/optimized-image/",
+            RequestContext = new APIGatewayHttpApiV2ProxyRequest.ProxyRequestContext()
+            {
+                Stage = "stage",
+            },
+            PathParameters = new Dictionary<string, string>()
+            {
+                {
+                    "imageId", string.Empty
+                }
+            }
+        };
+
+        // Act
+        var result = await _functions.FunctionHandlerAsync(request, _context);
+
+        // Assert
+        Assert.That(result.StatusCode, Is.EqualTo(400));
+        Assert.That(result.Body, Contains.Substring("imageId required"));
+    }
+
+    [Test]
+    public async Task GetOptimizedImage_WithNonExistingImageId_Returns404NotFound()
+    {
+        // Arrange
+        _dynamoDbClient
+            .GetItemAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, AttributeValue>>())
+            .Returns(new GetItemResponse
+                {
+                    Item = null
+                }
+            );
+        var request = new APIGatewayHttpApiV2ProxyRequest()
+        {
+            RawPath = "/stage/optimized-image/",
+            RequestContext = new APIGatewayHttpApiV2ProxyRequest.ProxyRequestContext()
+            {
+                Stage = "stage",
+            },
+            PathParameters = new Dictionary<string, string>()
+            {
+                {
+                    "imageId", "non-existing-image-id"
+                }
+            }
+        };
+
+        // Act
+        var result = await _functions.FunctionHandlerAsync(request, _context);
+
+        // Assert
+        Assert.That(result.StatusCode, Is.EqualTo(404));
+        Assert.That(result.Body, Contains.Substring("Image not found"));
+    }
+
+    [Test]
+    public async Task GetOptimizedImage_ReturnsPresignedUrl()
+    {
+        // Arrange
+        _dynamoDbClient
+            .GetItemAsync(Arg.Any<string>(), Arg.Any<Dictionary<string, AttributeValue>>())
+            .Returns(new GetItemResponse
+                {
+                    Item = new Dictionary<string, AttributeValue>()
+                    {
+                        {
+                            "ImageId", new AttributeValue()
+                            {
+                                S = "an-image-id"
+                            }
+                        },
+                        {
+                            "Status", new AttributeValue()
+                            {
+                                S = "Completed"
+                            }
+                        },
+                        {
+                            "DownloadImageUrl", new AttributeValue()
+                            {
+                                S = "a-presigned-url"
+                            }
+                        },
+                        {
+                            "DateTime", new AttributeValue()
+                            {
+                                S = "datetime"
+                            }
+                        },
+
+                    }
+                }
+            );
+        var request = new APIGatewayHttpApiV2ProxyRequest()
+        {
+            RawPath = "/stage/optimized-image/",
+            RequestContext = new APIGatewayHttpApiV2ProxyRequest.ProxyRequestContext()
+            {
+                Stage = "stage",
+            },
+            PathParameters = new Dictionary<string, string>()
+            {
+                {
+                    "imageId", "an-image-id"
+                }
+            }
+        };
+
+        // Act
+        var result = await _functions.FunctionHandlerAsync(request, _context);
+
+        // Assert
+        Assert.That(result.StatusCode, Is.EqualTo(200));
+        Assert.That(result.Body, Contains.Substring("an-image-id"));
+        Assert.That(result.Body, Contains.Substring("Completed"));
+        Assert.That(result.Body, Contains.Substring("a-presigned-url"));
     }
 }

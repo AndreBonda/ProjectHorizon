@@ -34,9 +34,7 @@ public class Functions
     public async Task<APIGatewayHttpApiV2ProxyResponse> FunctionHandlerAsync(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         var stage = request.RequestContext.Stage!;
-        var path = request.RequestContext.Http.Path.Substring(stage.Length + 1);
-        
-        context.Logger.LogInformation(path);
+        var path = request.RawPath.Substring(stage.Length + 1);
 
         if (path == "/presigned-url")
         {
