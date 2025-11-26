@@ -170,11 +170,18 @@ Resources:
       StageName: "prod"
       AutoDeploy: true
   
-  ImageApiRoute:
+  ImageUploadPresignedUrlRoute:
     Type: AWS::ApiGatewayV2::Route
     Properties: 
       ApiId: !Ref ImageApiGateway
       RouteKey: "GET /presigned-url"
+      Target: !Sub "integrations/${ImageApiIntegration}"
+      
+  ImageDownloadPresignedUrlRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref ImageApiGateway
+      RouteKey: "GET /optimized-image/{imageId}"
       Target: !Sub "integrations/${ImageApiIntegration}"
 
   ImageApiIntegration:

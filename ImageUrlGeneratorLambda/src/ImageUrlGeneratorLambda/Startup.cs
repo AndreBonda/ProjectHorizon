@@ -21,6 +21,7 @@ public class Startup
         var hostBuilder = new HostApplicationBuilder();
         hostBuilder.Services.AddSingleton(Configuration);
         hostBuilder.Services.AddAWSService<Amazon.S3.IAmazonS3>();
+        hostBuilder.Services.AddAWSService<Amazon.DynamoDBv2.IAmazonDynamoDB>();
         return hostBuilder;
     }
 }
